@@ -72,21 +72,48 @@ export async function createWareHouse(
   try {
     const db: Db = req.app.get("db");
     const { userid } = req.headers;
-    const { name, size } = req.body;
+    const { name, size, sizeOfGlodZone } = req.body;
+    const remainingSizeForGold = sizeOfGlodZone;
+    const maxSizeForGold = sizeOfGlodZone;
     const remainingSize = size;
     const maxSize = size;
     const medium = 0;
     const large = 0;
     const small = 0;
-    const newWarehouse = await db
-      .collection("warehouse")
-      .insertOne({ name, maxSize, remainingSize, small, medium, large });
+    if (!name) {
+      return res.status(400).json({ message: "Name is required" });
+    }
+    if (!size) {
+      return res.status(400).json({ message: "size is required" });
+    }
+    const newWarehouse = await db.collection("warehouse").insertOne({
+      name,
+      maxSize,
+      remainingSize,
+      small,
+      medium,
+      large,
+      sizeOfGlodZone,
+      userid,
+    });
+
     if (newWarehouse.acknowledged) {
       const wareid = newWarehouse.insertedId.toString();
+      const newGoldStorage = await db.collection("goldstore").insertOne({
+        maxSizeForGold,
+        remainingSizeForGold,
+        small,
+        medium,
+        large,
+        wareid,
+        userid,
+      });
+      const goldid = newGoldStorage.insertedId.toString();
       return res.status(200).json({
         message: "Successfully Created",
         wareid: wareid,
         userid: userid,
+        goldid: goldid,
         name: name,
         smallItems: small,
         mediumItems: medium,

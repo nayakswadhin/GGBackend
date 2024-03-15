@@ -82,3 +82,45 @@ export async function createProduct(
     console.log(error);
   }
 }
+export async function getWareHouse(
+  req: Express.Request,
+  res: Express.Response
+) {
+  try {
+    const db: Db = req.app.get("db");
+    const { userid } = req.headers;
+    if (!userid) {
+      return res.status(400).json({ message: "Required userid" });
+    }
+    const warehouses = await db
+      .collection("warehouse")
+      .find({ userid: userid })
+      .toArray();
+    if (warehouses.length) {
+      return res.status(200).json({ warehouses });
+    }
+    return res.status(400).json({ message: "No warehouse found" });
+  } catch (error) {
+    console.log(error);
+  }
+}
+export async function getProduct(req: Express.Request, res: Express.Response) {
+  try {
+    const db: Db = req.app.get("db");
+    const { wareid } = req.headers;
+    if (!wareid) {
+      return res.status(400).json({ message: "Required wareid" });
+    }
+    const products = await db
+      .collection("product")
+      .find({ wareid: wareid })
+      .toArray();
+    console.log(products);
+    if (products.length) {
+      return res.status(200).json({ products });
+    }
+    return res.status(400).json({ message: "No products Found" });
+  } catch (error) {
+    console.log(error);
+  }
+}

@@ -72,9 +72,7 @@ export async function createWareHouse(
   try {
     const db: Db = req.app.get("db");
     const { userid } = req.headers;
-    const { name, size, sizeOfGlodZone } = req.body;
-    const remainingSizeForGold = sizeOfGlodZone;
-    const maxSizeForGold = sizeOfGlodZone;
+    const { name, size, sizeOfGoldZone } = req.body;
     const remainingSize = size;
     const maxSize = size;
     const medium = 0;
@@ -93,15 +91,15 @@ export async function createWareHouse(
       small,
       medium,
       large,
-      sizeOfGlodZone,
+      sizeOfGoldZone,
       userid,
     });
 
     if (newWarehouse.acknowledged) {
       const wareid = newWarehouse.insertedId.toString();
       const newGoldStorage = await db.collection("goldstore").insertOne({
-        maxSizeForGold,
-        remainingSizeForGold,
+        maxSizeForGold: sizeOfGoldZone,
+        remainingSizeForGold: sizeOfGoldZone,
         small,
         medium,
         large,

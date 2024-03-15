@@ -38,7 +38,7 @@ export async function createProduct(
         .insertOne({ wareid, userid, productName, productId, area, size });
       const updatedSize = wareHouse?.remainingSize - area;
       let updatedScale = 0;
-      if (size == "small") {
+      if (size == "Small") {
         updatedScale = wareHouse?.small + 1;
         const updateWareHouse = await db
           .collection("warehouse")
@@ -46,7 +46,7 @@ export async function createProduct(
             { _id: new ObjectId(wareid) },
             { $set: { remainingSize: updatedSize, small: updatedScale } }
           );
-      } else if ("medium") {
+      } else if ("Medium") {
         updatedScale = wareHouse?.medium + 1;
         const updateWareHouse = await db
           .collection("warehouse")
@@ -54,7 +54,7 @@ export async function createProduct(
             { _id: new ObjectId(wareid) },
             { $set: { remainingSize: updatedSize, medium: updatedScale } }
           );
-      } else if ("large") {
+      } else if ("Large") {
         updatedScale = wareHouse?.large + 1;
         const updateWareHouse = await db
           .collection("warehouse")
@@ -120,6 +120,42 @@ export async function getProduct(req: Express.Request, res: Express.Response) {
       return res.status(200).json({ products });
     }
     return res.status(400).json({ message: "No products Found" });
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+export async function updateProduct(
+  req: Express.Request,
+  res: Express.Response
+) {
+  const db: Db = req.app.get("db");
+  const { productid } = req.params;
+  const { goldid } = req.headers;
+  const updateProduct = await db
+    .collection("product")
+    .updateOne({ _id: new ObjectId(productid) }, { $set: { wareid: goldid } });
+  if (updateProduct.acknowledged) {
+    return res.status(200).json({ message: "Sucessfully Updated" });
+  }
+  return res.status(400).json({ message: "Not Updated" });
+}
+
+export async function getProductInGold(
+  req: Express.Request,
+  res: Express.Response
+) {
+  try {
+    const db: Db = req.app.get("db");
+    const { goldid } = req.headers;
+    const products = await db
+      .collection("product")
+      .find({ wareid: goldid })
+      .toArray();
+    if (products.length) {
+      return res.status(200).json({ products });
+    }
+    return res.status(400).json({ message: "products not found" });
   } catch (error) {
     console.log(error);
   }

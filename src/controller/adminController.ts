@@ -124,3 +124,23 @@ export async function createWareHouse(
     console.log(error);
   }
 }
+
+export async function getWorkers(req: Express.Request, res: Express.Response) {
+  try {
+    const db: Db = req.app.get("db");
+    const { userid } = req.headers;
+    if (!userid) {
+      return res.status(400).json({ message: "Required userid" });
+    }
+    const workers = await db
+      .collection("worker")
+      .find({ userid: userid })
+      .toArray();
+    if (workers.length) {
+      return res.status(200).json({ workers });
+    }
+    return res.status(400).json({ message: "No workers Found" });
+  } catch (error) {
+    console.log(error);
+  }
+}

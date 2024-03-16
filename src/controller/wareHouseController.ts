@@ -125,22 +125,6 @@ export async function getProduct(req: Express.Request, res: Express.Response) {
   }
 }
 
-export async function updateProduct(
-  req: Express.Request,
-  res: Express.Response
-) {
-  const db: Db = req.app.get("db");
-  const { productid } = req.params;
-  const { goldid } = req.headers;
-  const updateProduct = await db
-    .collection("product")
-    .updateOne({ _id: new ObjectId(productid) }, { $set: { wareid: goldid } });
-  if (updateProduct.acknowledged) {
-    return res.status(200).json({ message: "Sucessfully Updated" });
-  }
-  return res.status(400).json({ message: "Not Updated" });
-}
-
 export async function getProductInGold(
   req: Express.Request,
   res: Express.Response

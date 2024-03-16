@@ -68,10 +68,13 @@ export async function assignWork(req: Express.Request, res: Express.Response) {
   try {
     const db: Db = req.app.get("db");
     const { workid, productid } = req.params;
-    const { goldid } = req.headers;
+    const { goldid, wareid } = req.headers;
     const { time, date } = req.body;
     if (!workid) {
       return res.status(400).json({ message: "Workid Required!!" });
+    }
+    if (!wareid) {
+      return res.status(400).json({ message: "Wareid Required!!" });
     }
     if (!productid) {
       return res.status(400).json({ message: "ProductId Required" });
@@ -85,7 +88,24 @@ export async function assignWork(req: Express.Request, res: Express.Response) {
     if (!goldid) {
       return res.status(400).json({ message: "Goldid is Required" });
     }
-
+    if (typeof wareid !== "string") {
+      return res.status(400).json({ message: "Invalid warehouse ID" });
+    }
+    if (typeof goldid !== "string") {
+      return res.status(400).json({ message: "Invalid warehouse ID" });
+    }
+    let wareHouse = await db
+      .collection("warehouse")
+      .findOne({ _id: new ObjectId(wareid) });
+    const product = await db
+      .collection("product")
+      .findOne({ _id: new ObjectId(productid) });
+    let goldZone = await db
+      .collection("goldstore")
+      .findOne({ _id: new ObjectId(goldid) });
+    if (product?.area > goldZone?.remainingSizeForGold) {
+      return res.status(400).json({ message: "Gold is Full" });
+    }
     const assignWork = await db.collection("assignWork").insertOne({
       workid,
       productid,
@@ -94,15 +114,37 @@ export async function assignWork(req: Express.Request, res: Express.Response) {
       isComplete: false,
     });
     if (assignWork.acknowledged) {
+      const size = wareHouse?.remainingSize + product?.area;
+      const sizeOfGold = goldZone?.remainingSizeForGold - product?.area;
+      const updateWareHouse = await db
+        .collection("warehouse")
+        .updateOne(
+          { _id: new ObjectId(wareid) },
+          { $set: { remainingSize: size } }
+        );
+      const updateGoldStore = await db
+        .collection("goldstore")
+        .updateOne(
+          { _id: new ObjectId(goldid) },
+          { $set: { remainingSizeForGold: sizeOfGold } }
+        );
+      wareHouse = await db
+        .collection("warehouse")
+        .findOne({ _id: new ObjectId(wareid) });
+      goldZone = await db
+        .collection("goldstore")
+        .findOne({ _id: new ObjectId(goldid) });
       const updateProduct = await db
         .collection("product")
         .updateOne(
           { _id: new ObjectId(productid) },
           { $set: { wareid: goldid } }
         );
-      return res
-        .status(200)
-        .json({ message: "Successfully Assigned the Work" });
+      return res.status(200).json({
+        message: "Successfully Assigned the Work",
+        sizeOfwarehouse: wareHouse?.remainingSize,
+        sizeOfGold: goldZone?.remainingSizeForGold,
+      });
     }
     return res.status(400).json({ message: "Got some Error" });
   } catch (error) {

@@ -11,6 +11,6 @@ const router = express.Router();
 router.post("/worker", createWorker);
 router.post("/worker/login", loginWorker);
 router.get("/works", getTask);
-router.post("/:taskid", updateWork);
+router.put("/:taskid", updateWork);
 
 module.exports = router;
